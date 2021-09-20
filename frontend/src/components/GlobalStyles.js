@@ -1,4 +1,4 @@
-import { createGlobalStyle } from "styled-components";
+import { createGlobalStyle } from 'styled-components';
 
 export default createGlobalStyle`
   :root {
@@ -76,8 +76,8 @@ input {
 }
 
   input {
-    font-size: 24px;
-    height: 42px;
+    font-size: 18px;
+    height: 38px;
     border: 2px solid var(--color-orange);
     border-radius: 4px;
     padding: 0 12px;

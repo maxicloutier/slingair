@@ -1,34 +1,62 @@
-import React, { useEffect, useState } from "react";
-import styled from "styled-components";
+import React, { useEffect, useState } from 'react';
+import styled from 'styled-components';
 
-const Plane = ({}) => {
+const Plane = ({ _id, setSeatId, formData, setFormData }) => {
   const [seating, setSeating] = useState([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // TODO: get seating data for selected flight
-  }, []);
+    fetch(`/flight/${_id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setSeating(data.data.seats);
+        setIsLoaded(true);
+      })
+      .catch((err) => {
+        console.error('Error', err);
+      });
+  }, [_id]);
 
   return (
-    <Wrapper>
-      {seating && seating.length > 0 ? (
-        seating.map((seat) => (
-          <SeatWrapper key={`seat-${seat.id}`}>
-            <label>
-              {seat.isAvailable ? (
-                <>
-                  <Seat type="radio" name="seat" onChange={() => {}} />
-                  <Available>{seat.id}</Available>
-                </>
-              ) : (
-                <Unavailable>{seat.id}</Unavailable>
-              )}
-            </label>
-          </SeatWrapper>
-        ))
-      ) : (
-        <Placeholder>Select a Flight to view seating.</Placeholder>
-      )}
-    </Wrapper>
+    <>
+      <Wrapper>
+        {seating && seating.length > 0 ? (
+          seating.map(
+            (seat, index) =>
+              isLoaded && (
+                <SeatWrapper key={`seat-${seat._id}`}>
+                  <label>
+                    {seat.isAvailable ? (
+                      <>
+                        <Seat
+                          type="radio"
+                          name="seat"
+                          onChange={() => {
+                            let newSeating = [...seating];
+                            newSeating[index].isAvailable = false;
+                            setSeatId(seat._id);
+                            setSeating(newSeating);
+                            setFormData({
+                              ...formData,
+                              flight: _id,
+                              seat: seat._id,
+                            });
+                          }}
+                        />
+                        <Available>{seat._id}</Available>
+                      </>
+                    ) : (
+                      <Unavailable>{seat._id}</Unavailable>
+                    )}
+                  </label>
+                </SeatWrapper>
+              )
+          )
+        ) : (
+          <Placeholder>Select a Flight to view seating.</Placeholder>
+        )}
+      </Wrapper>
+    </>
   );
 };
 

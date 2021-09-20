@@ -1,8 +1,8 @@
-import React from "react";
-import styled from "styled-components";
-import { NavLink } from "react-router-dom";
+import React from 'react';
+import styled from 'styled-components';
+import { NavLink } from 'react-router-dom';
 
-import slingairLogo from "../assets/logo_text.png";
+import slingairLogo from '../assets/logo_text.png';
 
 const Header = () => (
   <Wrapper>
@@ -10,11 +10,12 @@ const Header = () => (
       <h1>Sling Airlines</h1>
     </Logo>
     <Nav>
-      {/* TODO: only show links if the user has a reservation already */}
-      <>
-        <StyledNavLink to="/view-reservation">Reservation</StyledNavLink>
-        <StyledNavLink to="/profile">Profile</StyledNavLink>
-      </>
+      {localStorage.getItem('_id') && (
+        <>
+          <StyledNavLink to="/view-reservation">Reservation</StyledNavLink>
+          <StyledNavLink to="/profile">Profile</StyledNavLink>
+        </>
+      )}
     </Nav>
   </Wrapper>
 );

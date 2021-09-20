@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import tombstone from '../assets/tombstone.png';
 
-const Confirmation = () => {
+const Reservation = () => {
   const _id = localStorage.getItem('_id');
   const flight = localStorage.getItem('flight');
   const seat = localStorage.getItem('seat');
@@ -12,29 +12,35 @@ const Confirmation = () => {
   const email = localStorage.getItem('email');
 
   return (
-    <Wrapper>
-      <BookingDiv>
-        <Title>Your flight is confirmed!</Title>
-        <Details>
-          <b>Reservation</b> #: {_id}
-        </Details>
-        <Details>
-          <b>Flight #:</b> {flight}
-        </Details>
-        <Details>
-          <b>Seat #:</b> {seat}
-        </Details>
-        <Details>
-          <b>Name:</b> {givenName} {surname}
-        </Details>
-        <Details>
-          <b>Email:</b> {email}
-        </Details>
-      </BookingDiv>
-      <Img>
-        <StyledImg src={tombstone} alt="image" />
-      </Img>
-    </Wrapper>
+    <>
+      {localStorage.getItem('_id') ? (
+        <Wrapper>
+          <BookingDiv>
+            <Title>Your Reservation</Title>
+            <Details>
+              <b>Reservation</b> #: {_id}
+            </Details>
+            <Details>
+              <b>Flight #:</b> {flight}
+            </Details>
+            <Details>
+              <b>Seat #:</b> {seat}
+            </Details>
+            <Details>
+              <b>Name:</b> {givenName} {surname}
+            </Details>
+            <Details>
+              <b>Email:</b> {email}{' '}
+            </Details>
+          </BookingDiv>
+          <Img>
+            <StyledImg src={tombstone} alt="" />
+          </Img>
+        </Wrapper>
+      ) : (
+        <NoReservation>You have no reservation at the moment.</NoReservation>
+      )}
+    </>
   );
 };
 
@@ -76,4 +82,15 @@ const Details = styled.p`
   padding: 12px;
 `;
 
-export default Confirmation;
+const NoReservation = styled.div`
+  font-family: var(--font-body);
+  font-size: 34px;
+  font-weight: bolder;
+  padding: 25px;
+  margin-top: 50px;
+  margin: auto;
+  width: 100%;
+  text-align: center;
+`;
+
+export default Reservation;
