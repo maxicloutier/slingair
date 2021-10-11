@@ -51,23 +51,50 @@ const getFlight = async (req, res) => {
 const addReservations = async (req, res) => {
   const { flight, seat, givenName, surname, email } = req.body;
 
+  const query = { _id: flight };
+
+  let availableSeat = false;
+
+  const availability = await req.app.locals.db
+    .collection('flights')
+    .findOne(query);
+
+  availability.seats.forEach((seat) => {
+    if (seat.isAvailable && seat._id === req.body.seat) {
+      seat.isAvailable = false;
+      availableSeat = true;
+    }
+  });
+
   const newReservation = {
     _id: uuidv4(),
     ...req.body,
   };
 
-  try {
-    await req.app.locals.db
-      .collection('reservations')
-      .insertOne(newReservation);
+  const newValue = { $set: { seats: availability.seats } };
 
-    res
-      .status(201)
-      .json({ status: 201, message: 'Success', data: newReservation });
-  } catch (err) {
-    res
-      .status(400)
-      .json({ status: 400, data: newReservation, err: 'Something went wrong' });
+  await req.app.locals.db.collection('flights').updateOne(query, newValue);
+
+  if (availableSeat) {
+    try {
+      await req.app.locals.db
+        .collection('reservations')
+        .insertOne(newReservation);
+
+      res
+        .status(201)
+        .json({ status: 201, message: 'Success', data: newReservation });
+    } catch (err) {
+      res.status(400).json({
+        status: 400,
+        err: 'Something went wrong',
+      });
+    }
+  } else {
+    res.status(400).json({
+      status: 400,
+      err: 'This seat is not available. Please select another seat.',
+    });
   }
 };
 
@@ -107,13 +134,39 @@ const getSingleReservation = async (req, res) => {
 const deleteReservation = async (req, res) => {
   const { _id } = req.params;
   try {
+    const reservation = await req.app.locals.db
+      .collection('reservations')
+      .findOne({ _id });
+
     const result = await req.app.locals.db
       .collection('reservations')
       .deleteOne({ _id });
 
-    res
-      .status(200)
-      .json({ status: 200, message: 'Success', _id, data: result });
+    if (result) {
+      const query = { _id: reservation.flight };
+
+      const availability = await req.app.locals.db
+        .collection('flights')
+        .findOne(query);
+
+      availability.seats.forEach((seat) => {
+        if (seat._id === reservation.seat) {
+          seat.isAvailable = true;
+        }
+      });
+
+      const newValue = { $set: { seats: availability.seats } };
+
+      await req.app.locals.db.collection('flights').updateOne(query, newValue);
+
+      res
+        .status(200)
+        .json({ status: 200, message: 'Success', _id, data: result });
+    } else {
+      res
+        .status(400)
+        .json({ status: 400, _id, err: 'Unable to delete the reservation' });
+    }
   } catch (err) {
     res.status(400).json({ status: 400, _id, err: 'Something went wrong' });
   }
@@ -125,21 +178,58 @@ const updateReservation = async (req, res) => {
 
   const { _id } = req.params;
 
-  try {
-    await req.app.locals.db.collection('reservations').updateOne(
-      { _id },
-      {
-        $set: {
-          flight: flight,
-          seat: seat,
-          givenName: givenName,
-          surname: surname,
-          email: email,
-        },
-      }
-    );
+  const query = { _id };
 
-    res.status(200).json({ status: 200, _id, message: 'Success' });
+  try {
+    const updatedReservation = {
+      $set: {
+        flight: flight,
+        seat: seat,
+        givenName: givenName,
+        surname: surname,
+        email: email,
+      },
+    };
+
+    const oldReservation = await req.app.locals.db
+      .collection('reservations')
+      .findOne(query);
+
+    await req.app.locals.db
+      .collection('reservations')
+      .updateOne(query, updatedReservation);
+
+    if (updatedReservation) {
+      const query = { _id: flight };
+
+      const availability = await req.app.locals.db
+        .collection('flights')
+        .findOne(query);
+
+      availability.seats.forEach((seat) => {
+        if (seat._id === req.body.seat) {
+          seat.isAvailable = false;
+        }
+        if (seat._id === oldReservation.seat) {
+          seat.isAvailable = true;
+        }
+      });
+
+      const newValue = { $set: { seats: availability.seats } };
+
+      await req.app.locals.db.collection('flights').updateOne(query, newValue);
+
+      res.status(200).json({
+        status: 200,
+        _id,
+        message: 'Success',
+        ...updatedReservation.$set,
+      });
+    } else {
+      res
+        .status(400)
+        .json({ status: 400, _id, err: 'Unable to update the reservation' });
+    }
   } catch (err) {
     res.status(400).json({ status: 400, _id, err: 'Something went wrong' });
   }
