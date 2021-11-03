@@ -2,7 +2,6 @@
 
 # dependencies
 .env
-dotenv
 
 # testing
 /coverage
